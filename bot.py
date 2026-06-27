@@ -38,13 +38,23 @@ post = posts[next_index]
 text = post.get('text', '')
 print(f"📝 Post: {text[:60]}...")
 
+# 🔥 ইনলাইন বাটন তৈরি (শুধু এই অংশ যোগ)
+reply_markup = {
+    "inline_keyboard": [
+        [
+            {"text": "🔗 Join Our List", "url": "https://t.me/addlist/57pQLQQl0Oo1MDk9"}
+        ]
+    ]
+}
+
 # টেলিগ্রামে পাঠান
 url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 res = requests.post(url, json={
     "chat_id": CHANNEL_ID,
     "text": text,
     "parse_mode": "HTML",
-    "disable_web_page_preview": True
+    "disable_web_page_preview": True,
+    "reply_markup": reply_markup   # ← এই লাইন যোগ
 }, timeout=15).json()
 
 if res.get('ok'):
