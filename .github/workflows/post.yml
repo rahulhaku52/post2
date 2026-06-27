@@ -1,0 +1,41 @@
+name: Sex Ed Auto Poster
+
+on:
+  schedule:
+    - cron: '* */5 * * *'
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ক্যাশ রিস্টোর
+      - name: Restore index cache
+        uses: actions/cache@v4
+        with:
+          path: last_index.json
+          key: last-index-${{ github.run_id }}
+          restore-keys: |
+            last-index-
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - run: pip install requests
+
+      - name: Run poster
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+        run: python bot.py
+
+      # ক্যাশ সেভ
+      - name: Save index cache
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: last_index.json
+          key: last-index-${{ github.run_id }}
