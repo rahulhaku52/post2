@@ -2,7 +2,7 @@ name: Sex Ed Auto Poster
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # প্রতি ৩০ মিনিট (ইচ্ছেমতো বদলাবে)
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}   # গিট পুশের জন্য জরুরি
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -25,7 +25,6 @@ jobs:
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
         run: python bot.py
 
-      # posted_index.json আপডেট হলে গিটে কমিট করে দেবে
       - name: Commit updated index
         run: |
           git config user.name "GitHub Actions"
