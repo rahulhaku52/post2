@@ -2,7 +2,7 @@ name: Sex Ed Auto Poster
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '* */5 * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,8 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # ক্যাশ রিস্টোর
+      - name: Restore index cache
+        uses: actions/cache@v4
         with:
-          token: ${{ secrets.GH_PAT }}   # Personal Access Token ব্যবহার করুন
+          path: last_index.json
+          key: last-index-${{ github.run_id }}
+          restore-keys: |
+            last-index-
 
       - uses: actions/setup-python@v5
         with:
@@ -25,9 +32,10 @@ jobs:
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
         run: python bot.py
 
-      - name: Commit updated index
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add posted_index.json
-          git diff --cached --quiet || (git commit -m "Update posted index" && git push)
+      # ক্যাশ সেভ
+      - name: Save index cache
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: last_index.json
+          key: last-index-${{ github.run_id }}
