@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}   # Personal Access Token ব্যবহার করুন
 
       - uses: actions/setup-python@v5
         with:
