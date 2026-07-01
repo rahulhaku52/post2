@@ -1,4 +1,4 @@
-import os, json, requests, time
+import os, json, requests, time, random
 from io import BytesIO
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
@@ -41,24 +41,60 @@ post = posts[next_index]
 caption = post.get('text', '')
 print(f"📝 Caption: {caption[:60]}...")
 
-# ---------- ইমেজ জেনারেশন (শুধু Pollinations) ----------
-def build_image_prompt(text):
-    prompt = (
-        "A beautiful Bangladeshi woman in a traditional saree, "
-        "sensual pose, village background, moody lighting, "
-        "cinematic, photorealistic, adult vibe, "
-        "no nudity, tasteful, aesthetic"
-    )
-    if "শাড়ি" in text or "sari" in text.lower():
-        prompt += ", blouse, saree fall, navel visible"
-    if "ব্লাউজ" in text or "blouse" in text.lower():
-        prompt += ", tight blouse, cleavage hint"
-    if "প্যান্টি" in text or "panty" in text.lower():
-        prompt += ", panty line visible through thin saree"
-    if "গুদ" in text or "pussy" in text.lower():
-        prompt += ", wet patch hint on saree"
-    # ছোটো করে নিচ্ছি যাতে URL বেশি লম্বা না হয়
-    return prompt[:300]
+# ---------- ইমেজ জেনারেশন (শুধু Pollinations, ভিন্ন ভিন্ন prompt) ----------
+def build_image_prompt(text, index):
+    """পোস্টের কন্টেন্ট অনুসারে ভিন্ন ইমেজ প্রম্পট তৈরি করবে"""
+    # বেসিক স্টাইল
+    base = "cinematic, photorealistic, adult vibe, no nudity, tasteful, aesthetic"
+
+    # পোস্টের কীওয়ার্ড ধরে ভিন্ন দৃশ্য নির্ধারণ
+    if "শাড়ি" in text or "saree" in text.lower():
+        scene = random.choice([
+            "A Bangladeshi woman in a saree lifted above her navel, revealing her panty, wet saree clinging to her body",
+            "A woman in a thin saree, blouse open, bra visible, saree falling off her shoulder",
+            "A woman in a saree, sitting on a bed, saree draped loosely, blouse unbuttoned, cleavage visible"
+        ])
+    elif "ব্লাউজ" in text or "blouse" in text.lower():
+        scene = random.choice([
+            "A woman wearing a tight blouse, top buttons open, bra peeking out, saree slightly lifted",
+            "A woman in a blouse and petticoat, blouse partially unbuttoned, one bra strap fallen"
+        ])
+    elif "প্যান্টি" in text or "panty" in text.lower():
+        scene = random.choice([
+            "A woman in a thin saree, bent forward, panty line clearly visible through the fabric",
+            "A woman lifting her saree to show her panty, shy expression, village background"
+        ])
+    elif "গুদ" in text or "pussy" in text.lower():
+        scene = random.choice([
+            "A woman in a saree, wet patch visible on her saree near her navel, sensual look",
+            "A woman sitting with legs slightly apart, saree damp between her thighs"
+        ])
+    elif "শর্টস" in text or "shorts" in text.lower():
+        scene = random.choice([
+            "A woman in shorts and a crop top, village background, bending forward",
+            "A woman wearing tiny shorts, sitting on a chair, legs crossed"
+        ])
+    else:
+        scene = random.choice([
+            "A beautiful Bangladeshi woman in a traditional saree, sensual pose, village background",
+            "A woman in a nighty, lying on a bed, moody lighting, romantic atmosphere",
+            "A woman in a towel, wet hair, standing by a window, rain outside"
+        ])
+
+    # ব্যাকগ্রাউন্ড ও সময়
+    time_of_day = random.choice(["sunset", "night", "golden hour", "rainy evening", "cloudy afternoon"])
+    # র‌্যান্ডম বিস্তারিত
+    details = random.choice([
+        "intricate details, soft focus, film grain",
+        "sharp focus, high contrast, dramatic shadows",
+        "soft lighting, dreamy atmosphere"
+    ])
+
+    # ইউনিক এলিমেন্ট (index + random)
+    unique = f"uid:{index}_{random.randint(1000,9999)}"
+
+    prompt = f"{scene}, {base}, {time_of_day}, {details}, {unique}"
+    return prompt[:350]  # খুব বেশি লম্বা নয়
 
 def fetch_pollinations_image(prompt):
     encoded = requests.utils.quote(prompt)
@@ -83,7 +119,7 @@ def fetch_pollinations_image(prompt):
     return None
 
 print("🎨 Generating image with Pollinations...")
-prompt = build_image_prompt(caption)
+prompt = build_image_prompt(caption, next_index)
 image_bytes = fetch_pollinations_image(prompt)
 
 # ---------- টেলিগ্রামে পাঠানো ----------
