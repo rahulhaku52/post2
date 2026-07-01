@@ -7,7 +7,7 @@ from io import BytesIO
 
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 CHANNEL_ID = os.environ.get('CHANNEL_ID')
-A1ART_API_KEY = os.environ.get('A1ART_API_KEY')
+A1ART_API_KEY = os.environ.get('A1ART_API_KEY')  # তোমার দেওয়া API key: 960d41029dc244e4a7b7ee8ce083615c
 
 if not BOT_TOKEN or not CHANNEL_ID:
     print("❌ BOT_TOKEN or CHANNEL_ID not set!")
@@ -48,8 +48,9 @@ def generate_image_from_text(text):
     if not A1ART_API_KEY:
         return None
 
-    # a1.art API endpoint (ডকুমেন্টেশন অনুযায়ী)
-    url = "https://api.a1.art/v1/images/generations"
+    # a1.art API endpoint (তাদের ডক্স অনুযায়ী এটা হতে পারে)
+    url = "https://a1.art/api/v1/generate"
+
     headers = {
         "Authorization": f"Bearer {A1ART_API_KEY}",
         "Content-Type": "application/json"
@@ -71,41 +72,58 @@ def generate_image_from_text(text):
     if "গুদ" in text or "pussy" in text.lower():
         prompt += ", wet patch hint on saree"
 
-    # payload (a1.art API-র প্রয়োজন অনুযায়ী ফিল্ড)
     payload = {
         "prompt": prompt,
         "negative_prompt": "nude, naked, explicit, porn, deformed, ugly",
         "width": 512,
         "height": 768,
-        "num_inference_steps": 25,
-        "guidance_scale": 7,
+        "steps": 25,
+        "cfg_scale": 7,
         "sampler": "Euler a"
     }
 
+    print(f"🎯 API URL: {url}")
+    print(f"🎯 Payload: {json.dumps(payload, indent=2)}")
+
     try:
-        # timeout 60 সেকেন্ড করে দেওয়া হলো
-        resp = requests.post(url, json=payload, headers=headers, timeout=60)
+        resp = requests.post(url, json=payload, headers=headers, timeout=90)
+        print(f"📡 Status: {resp.status_code}")
+        print(f"📡 Response Body: {resp.text[:500]}")  # প্রথম 500 ক্যারেক্টার লগ
+
         if resp.status_code == 200:
             data = resp.json()
+            # বিভিন্ন সম্ভাব্য response format handle
             if "image_url" in data:
                 return data["image_url"]
-            elif "image" in data:  # base64
+            elif "url" in data:
+                return data["url"]
+            elif "image" in data:
                 return base64.b64decode(data["image"])
-            elif "data" in data and len(data["data"]) > 0:
+            elif "data" in data and isinstance(data["data"], list) and len(data["data"]) > 0:
                 item = data["data"][0]
                 if "url" in item:
                     return item["url"]
                 elif "b64_json" in item:
                     return base64.b64decode(item["b64_json"])
+                elif "image" in item:
+                    return base64.b64decode(item["image"])
                 else:
-                    print(f"⚠️ Unexpected data format: {item}")
+                    print(f"⚠️ Unknown data item: {item}")
                     return None
             else:
-                print(f"⚠️ Unexpected response: {data}")
+                print(f"⚠️ Unknown response format: {json.dumps(data, indent=2)[:300]}")
                 return None
         else:
-            print(f"❌ a1.art API error: {resp.status_code} - {resp.text}")
+            print(f"❌ API Error: {resp.status_code}")
+            # যদি 401/403 হয়, API key ভুল; 404 হলে endpoint ভুল
+            if resp.status_code == 401 or resp.status_code == 403:
+                print("🔐 API key invalid or unauthorized!")
+            elif resp.status_code == 404:
+                print("🔗 Endpoint not found — check API URL!")
             return None
+    except requests.exceptions.Timeout:
+        print("⏰ Request timed out — server not responding!")
+        return None
     except Exception as e:
         print(f"❌ Image generation failed: {e}")
         return None
