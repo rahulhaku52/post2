@@ -2,7 +2,7 @@ name: Sex Ed Auto Poster
 
 on:
   schedule:
-    - cron: '* */5 * * *'
+    - cron: '0 */5 * * *'   # প্রতি ৫ ঘণ্টায় একবার
   workflow_dispatch:
 
 jobs:
@@ -30,6 +30,7 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          A1ART_API_KEY: ${{ secrets.A1ART_API_KEY }}   # ← নতুন লাইন
         run: python bot.py
 
       # ক্যাশ সেভ
